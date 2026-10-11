@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: quick-pizza-deployment
+  namespace: production
+  labels:
+    app: quick-pizza
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: quick-pizza
+  template:
+    metadata:
+      labels:
+        app: quick-pizza
+    spec:
+      containers:
+      - name: quick-pizza
+        image: ghcr.io/grafana/quickpizza-local:latest
+        ports:
+        - containerPort: 3333
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: quick-pizza-service
+  namespace: production
+spec:
+  selector:
+    app: quick-pizza
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3333
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata: 
+  name: quick-pizza-ingress-route
+  namespace: production
+spec:
+  ingressClassName: traefik
+  routes:
+  - kind: Rule
+    match: Host(`quick-pizza.com`)
+    services:
+    - kind: Service
+      name: quick-pizza-service
+      namespace: production
+      port: 80
